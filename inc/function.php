@@ -1,37 +1,19 @@
 <?php
-// Включаем строгую типизацию
 declare(strict_types=1);
-/**
- * @param $some
- * отладочная функция
- */
 function dd($some){
     echo '<pre>';
     print_r($some);
     echo '</pre>';
 }
-/**
- * @param $url
- * редирект на указаный URL
- */
 function goUrl(string $url){
     echo '<script type="text/javascript">location="';
     echo $url;
     echo '";</script>';
 }
-/**
- * функция возвращает масив статей
- * @return array
- */
 function getArticles() : array
 {
-    return json_decode(file_get_contents('db/articles.json'), true);
+    return json_decode(file_get_contents('../db/articles.json'), true);
 }
-/**
- * функция возвращает статью  в виде масива по id
- * @param int $id
- * @return array
- */
 function getArticleById(int $id):array
 {
     $articleList =getArticles();
@@ -41,19 +23,75 @@ function getArticleById(int $id):array
     }
     return $curentArticle;
 }
-/**
- * функция генерирует список <li> из Json
- * и формирует ссылки вида URI index.php?id=1
- *
- * @return string
- */
-function getArticleList(): string
+function getArticleLists(): string
 {
     $articles = getArticles();
     $link = '';
     foreach ($articles as $article) {
-        $link .= '<li class="nav-item"><a class="nav-link" href="index.php?id='. $article['id']
-            . '">'. $article['title']. '</a></li>';
+        $link .= getOneArticle($article, true);
     }
     return $link;
+}
+function getOneArticle($article, $isList): string
+{
+    $link = '';
+    if (empty($isList)) {
+        $link = '
+<p>
+    Ups, bóbr nie jest już kurwą, bo biegle nie mówi po polsku <br>
+    (ссылка на стим преподавателя: https://steamcommunity.com/id/cahadi/) <br>
+    (Я не розумію навіщо потрібен цей блок коду) <br>
+</p>';
+    }
+
+    # Universal structure of card creating
+    $link .= '
+    <article class="col-12 col-md-6 tm-post">
+    <hr class="tm-hr-primary">
+        <div class="tm-post-link-inner">
+            <img src="' . $article['image'] . '" alt="Image" class="img-fluid">
+        </div>
+        <span class="position-absolute tm-new-badge"> New(' . $article['id'] . ')</span>
+        <h2 class="tm-pt-30 tm-color-primary tm-post-title">' . $article['title'] . '</h2>';
+
+    if ($isList == false)
+    {
+        $link .= '
+        <p class="tm-pt-30">
+            ' . $article['content'] . '
+        </p>';
+    }
+
+    $link .= '<hr>
+    <div class="d-flex justify-content-between tm-pt-45">';
+
+    if ($isList) {
+        $link = '
+        <span class="tm-color-gray"><a href="index.php?id=' . $article['id'] . '" class="btn center-block">More Info</a></span>';
+    }
+    else {
+        $link = '
+        <span class="tm-color-gray"><a href="index.php" class="btn center-block">All states</a></span>
+        <span class="tm-color-gray"><a class="btn center-block">Edit</a></span>
+        <span class="tm-color-gray"><a class="btn center-block">Delete</a></span>';
+    }
+
+    $link .= '
+</div>
+</article>';
+    return $link;
+}
+function main():string
+{
+    if (isset($_GET['id']))
+    {
+        $id = (int)$_GET['id'];
+        dd($id);
+        $article = getArticleById($id);
+        return getOneArticle($article, false);
+    }
+    else
+    {
+        return getArticleLists();
+    }
 }
